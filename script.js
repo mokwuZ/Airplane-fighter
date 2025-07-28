@@ -1,9 +1,3 @@
-// TO DO
-// de facut sa apara in mijlocul board-ului un buton de start
-// de facut ca jocul sa inceapa cand Apesi pe butonul de START
-// de afisat un timer care sa reprezinte scorul jucatorului
-
-
 const canvas = document.getElementById("canvasBoard")
 const canvasWidth = 600
 const canvasHeight = 750
@@ -52,7 +46,6 @@ function fallingAsteroid() {
         asteroid.x = Math.floor(Math.random() * (canvasWidth - 50))
         asteroid.y = 0
     }
-
     if (((asteroid.x + asteroid.width >= airplane.x && asteroid.x <= airplane.x + airplane.width)
          && (asteroid.y + asteroid.vy)) >=  airplane.y) {
         ctx.clearRect(asteroid.x, asteroid.y, asteroid.width, asteroid.height)
@@ -64,13 +57,12 @@ function fallingAsteroid() {
         ctx.font = "50px serif"
         ctx.fillText("GAME OVER!", canvasWidth / 2 - 150, canvasHeight / 2)
         ctx.fillText("Your score is: " + score, canvasWidth / 2 - 170, canvasHeight / 2 + 70)
-
     }
 }
 
 window.addEventListener("load", () => {
     ctx.font = "20px serif"
-    ctx.fillText("Press \"SPACE\" to start!", canvasWidth / 2 - 100, canvasHeight / 2 )
+    ctx.fillText("Press \"SPACE\" to start!", canvasWidth / 2 - 100, canvasHeight / 2)
 })
 
 window.addEventListener("keydown", (event) => {
