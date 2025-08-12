@@ -1,17 +1,19 @@
-const canvas = document.getElementById("canvasBoard")
-const canvasWidth = 600
-const canvasHeight = 750
-const ctx = canvas.getContext("2d")
-const airplaneImg = new Image()
-airplaneImg.src = "Airplane V2.png"
-const asteroidImg = new Image()
-asteroidImg.src = "Asteroid.png"
-const explosionImg = new Image()
-explosionImg.src = "Explosion.jpg"
-let gameStatus = true
-let score = 0
-let timerScore
-let timerAsteroid
+const canvas = document.getElementById("canvasBoard");
+const ctx = canvas.getContext("2d");
+const airplaneImg = createImage("Airplane V2.png");
+const asteroidImg = createImage("Asteroid.png");
+const explosionImg = createImage("Explosion.jpg");
+let gameStatus = true;
+let gameStart = false;
+let score = 0;
+let timerScore;
+let timerAsteroid;
+
+function createImage(location) {
+    let img = new Image();
+    img.src = location;
+    return img;
+}
 
 const airplane = {
     x: 250,
@@ -23,8 +25,8 @@ const airplane = {
 };
 
 const asteroid = {
-    x: Math.floor(Math.random() * (canvasWidth - 50)),
-    y: 25,
+    x: Math.floor(Math.random() * (canvas.width - 50)),
+    y: 30,
     vx: 0,
     vy: 50,
     width: 50,
@@ -35,67 +37,74 @@ function gameScore() {
     ctx.font = "20px serif";
     ctx.clearRect(0, 0, 3000, 20);
     ctx.fillText("Score: " + score, 0, 15);
-    score += 10;
 }
 
 function fallingAsteroid() {
-    ctx.clearRect(asteroid.x, asteroid.y, asteroid.width, asteroid.height)
-    asteroid.y += asteroid.vy
-    ctx.drawImage(asteroidImg, asteroid.x, asteroid.y, asteroid.width, asteroid.height)
-    if (asteroid.y >= canvasHeight) {
-        asteroid.x = Math.floor(Math.random() * (canvasWidth - 50))
-        asteroid.y = 0
+    clearImage(asteroid);
+    asteroid.y += asteroid.vy;
+    drawImage(asteroidImg, asteroid);
+    if (asteroid.y >= canvas.height) {
+        asteroid.x = Math.floor(Math.random() * (canvas.width - 50));
+        asteroid.y = 0;
+        ++score;
+        gameScore();
     }
-    if (((asteroid.x + asteroid.width >= airplane.x && asteroid.x <= airplane.x + airplane.width)
-         && (asteroid.y + asteroid.vy)) >=  airplane.y) {
-        ctx.clearRect(asteroid.x, asteroid.y, asteroid.width, asteroid.height)
-        ctx.clearRect(airplane.x, airplane.y, airplane.width, airplane.height)
-        ctx.drawImage(explosionImg, airplane.x, airplane.y, airplane.width, airplane.height)
-        gameStatus = false
-        clearInterval(timerAsteroid)
-        clearInterval(timerScore)
-        ctx.font = "50px serif"
-        ctx.fillText("GAME OVER!", canvasWidth / 2 - 150, canvasHeight / 2)
-        ctx.fillText("Your score is: " + score, canvasWidth / 2 - 170, canvasHeight / 2 + 70)
+    if (collisionCheck(asteroid, airplane)) {
+        clearImage(asteroid);
+        clearImage(airplane);
+        drawImage(explosionImg, airplane);
+        gameStatus = false;
+        clearInterval(timerAsteroid);
+        clearInterval(timerScore);
+        ctx.font = "50px serif";
+        ctx.fillText("GAME OVER!", canvas.width / 2 - 150, canvas.height / 2);
+        ctx.fillText("Your score is: " + score, canvas.width / 2 - 170, canvas.height / 2 + 70);
     }
 }
 
+function collisionCheck(objOne, objTwo) {
+    if (((objOne.x + objOne.width >= objTwo.x && objOne.x <= objTwo.x + objTwo.width)
+         && (objOne.y + objOne.height)) >=  objTwo.y) {
+        return true;
+        }
+        return false;
+}
+
+function drawImage(imageToDraw, objImage) {
+    ctx.drawImage(imageToDraw, objImage.x, objImage.y, objImage.width, objImage.height);
+}
+
+function clearImage(objImage) {
+    ctx.clearRect(objImage.x, objImage.y, objImage.width, objImage.height);
+}
+
 window.addEventListener("load", () => {
-    ctx.font = "20px serif"
-    ctx.fillText("Press \"SPACE\" to start!", canvasWidth / 2 - 100, canvasHeight / 2)
+    ctx.font = "20px serif";
+    ctx.fillText("Press \"SPACE\" to start!", canvas.width / 2 - 100, canvas.height / 2);
 })
 
 window.addEventListener("keydown", (event) => {
-    if (event.code == "Space") {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        gameScore()
-        ctx.drawImage(airplaneImg, airplane.x, airplane.y, airplane.width, airplane.height)
-        ctx.drawImage(asteroidImg, asteroid.x, asteroid.y, asteroid.width, asteroid.height)
-        timerScore = setInterval(gameScore, 1000)
-        timerAsteroid = setInterval(fallingAsteroid, 150)
+    if (event.code == "Space" && gameStart == false) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        gameScore();
+        gameStart = true;
+        drawImage(airplaneImg, airplane);
+        drawImage(asteroidImg, asteroid);
+        timerAsteroid = setInterval(fallingAsteroid, 150);
     }
  })
-
-
-airplaneImg.addEventListener("keyboard", () => {
-        gameScore()
-        ctx.drawImage(airplaneImg, airplane.x, airplane.y, airplane.width, airplane.height)
-        ctx.drawImage(asteroidImg, asteroid.x, asteroid.y, asteroid.width, asteroid.height)
-        timerScore = setInterval(gameScore, 1000)
-        timerAsteroid = setInterval(fallingAsteroid, 150)
-});
 
 addEventListener("keydown", (e) => {
     if (gameStatus) {
         if (e.code === "ArrowRight" && airplane.x < 500) {
-            ctx.clearRect(airplane.x, airplane.y, airplane.width, airplane.height)
-            airplane.x += airplane.vx
-            ctx.drawImage(airplaneImg, airplane.x, airplane.y, airplane.width, airplane.height)
+            clearImage(airplane);
+            airplane.x += airplane.vx;
+            drawImage(airplaneImg, airplane);
         }
         if (e.code === "ArrowLeft" && airplane.x > 0) {
-            ctx.clearRect(airplane.x, airplane.y, airplane.width, airplane.height)
-            airplane.x -= airplane.vx
-            ctx.drawImage(airplaneImg, airplane.x, airplane.y, airplane.width, airplane.height)
+            clearImage(airplane);
+            airplane.x -= airplane.vx;
+            drawImage(airplaneImg, airplane);
         }
     }
 })
