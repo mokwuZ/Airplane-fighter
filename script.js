@@ -3,10 +3,9 @@ const ctx = canvas.getContext("2d");
 const airplaneImg = createImage("Airplane V2.png");
 const asteroidImg = createImage("Asteroid.png");
 const explosionImg = createImage("Explosion.jpg");
-let gameStatus = true;
+let gameStatus = false;
 let gameStart = false;
 let score = 0;
-let timerScore;
 let timerAsteroid;
 
 function createImage(location) {
@@ -18,20 +17,29 @@ function createImage(location) {
 const airplane = {
     x: 250,
     y: 620,
-    vx: 50,
+    vx: 20,
     vy: 0,
     width: 100,
     height: 100,
 };
 
 const asteroid = {
-    x: Math.floor(Math.random() * (canvas.width - 50)),
+    x: Math.floor(Math.random() * (canvas.width - 50)), 
     y: 30,
     vx: 0,
-    vy: 50,
+    vy: 20,
     width: 50,
     height: 50,
 };
+
+class laserBeam {
+    width = 3;
+    height = 15;
+    x = airplane.x + airplane.width / 2 - this.width;
+    y = airplane.y - this.height;
+    vx = 0;
+    vy = 10;
+}
 
 function gameScore() {
     ctx.font = "20px serif";
@@ -46,16 +54,13 @@ function fallingAsteroid() {
     if (asteroid.y >= canvas.height) {
         asteroid.x = Math.floor(Math.random() * (canvas.width - 50));
         asteroid.y = 0;
-        ++score;
-        gameScore();
     }
-    if (collisionCheck(asteroid, airplane)) {
+    if (collisionCheckAirplane(asteroid, airplane)) {
         clearImage(asteroid);
         clearImage(airplane);
         drawImage(explosionImg, airplane);
         gameStatus = false;
         clearInterval(timerAsteroid);
-        clearInterval(timerScore);
         ctx.font = "50px serif";
         ctx.fillText("GAME OVER!", canvas.width / 2 - 150, canvas.height / 2);
         ctx.fillText("Your score is: " + score, canvas.width / 2 - 170, canvas.height / 2 + 70);
@@ -63,8 +68,16 @@ function fallingAsteroid() {
 }
 
 function collisionCheck(objOne, objTwo) {
-    if (((objOne.x + objOne.width >= objTwo.x && objOne.x <= objTwo.x + objTwo.width)
-         && (objOne.y + objOne.height)) >=  objTwo.y) {
+    if ((objOne.x + objOne.width >= objTwo.x && objOne.x + objOne.width <= objTwo.x + objTwo.width)
+         && objOne.y <=  objTwo.y + objOne.height) {
+        return true;
+        }
+        return false;
+}
+
+function collisionCheckAirplane(objOne, objTwo) {
+    if ((objOne.x + objOne.width >= objTwo.x && objOne.x <= objTwo.x + objTwo.width)
+         && objOne.y + objOne.height >=  objTwo.y) {
         return true;
         }
         return false;
@@ -72,6 +85,10 @@ function collisionCheck(objOne, objTwo) {
 
 function drawImage(imageToDraw, objImage) {
     ctx.drawImage(imageToDraw, objImage.x, objImage.y, objImage.width, objImage.height);
+}
+
+function drawLaser(obj) {
+    ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
 }
 
 function clearImage(objImage) {
@@ -84,10 +101,33 @@ window.addEventListener("load", () => {
 })
 
 window.addEventListener("keydown", (event) => {
+    if (event.code == "Space" && gameStatus == true) {
+        let beam = new laserBeam();
+        drawLaser(beam);
+        let beamTimer = setInterval(() => {
+                clearImage(beam);
+                beam.y -= beam.vy;
+                drawLaser(beam);
+                if (collisionCheck(beam, asteroid)) {
+                    clearImage(asteroid);
+                    clearImage(beam);
+                    drawImage(explosionImg, asteroid);
+                    setTimeout(() => {
+                        clearImage(asteroid)
+                        clearInterval(beamTimer);
+                        asteroid.x = Math.floor(Math.random() * (canvas.width - 50));
+                        asteroid.y = 0;
+                        ++score;
+                        gameScore();
+                    }, 90);
+                }
+            }, 100)
+    }
     if (event.code == "Space" && gameStart == false) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         gameScore();
         gameStart = true;
+        gameStatus = true;
         drawImage(airplaneImg, airplane);
         drawImage(asteroidImg, asteroid);
         timerAsteroid = setInterval(fallingAsteroid, 150);
@@ -95,7 +135,7 @@ window.addEventListener("keydown", (event) => {
  })
 
 addEventListener("keydown", (e) => {
-    if (gameStatus) {
+    if (gameStatus && gameStart) {
         if (e.code === "ArrowRight" && airplane.x < 500) {
             clearImage(airplane);
             airplane.x += airplane.vx;
